@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import paho.mqtt.publish as mqtt
 from dotenv import load_dotenv
 import os
+import argparse
 
 
 def mqtt_publisher(payload):
@@ -49,10 +50,25 @@ def schedule_irrigation(config):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run the irrigation server.")
+    parser.add_argument(
+        "--mqtt-check",
+        help="Check if the server can publish on the MQTT broker.",
+        action="store_true"
+    )
+
     load_dotenv()
     BROKER = os.getenv("BROKER")
     PORT = int(os.getenv("PORT"))
     TOPIC = os.getenv("TOPIC")
+
+    args = parser.parse_args()
+    if args.mqtt_check:
+        payload = "MQTTCHECK"
+        print(f"Sending \"{payload}\" on {BROKER}:{PORT} at topic {TOPIC}")
+        mqtt_publisher(payload)
+        exit(1)
+
 
     config_file_path = "irrigation_config.json"
 
