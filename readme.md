@@ -100,3 +100,6 @@ Run the script with the flag --mqtt-check, to try publish a message in the speci
 ```
 python irrigation-server.py --mqtt-check
 ```
+
+## IoT Board
+An implementation of an IoT Board code that follows the MQTT logic described in this project can be found in the folder [```esp12e-4relays-board```](https://github.com/alessandrogilli/irrigation-server/tree/main/esp12e-4relays-board).
