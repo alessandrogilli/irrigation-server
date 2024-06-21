@@ -171,6 +171,7 @@ void setup() {
 
 void loop() {
   if (!client.connected()) {
+    setup_wifi();
     reconnect();
   }
   client.loop();
