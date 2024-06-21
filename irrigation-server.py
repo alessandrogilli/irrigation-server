@@ -93,7 +93,7 @@ if __name__ == "__main__":
     load_dotenv()
     BROKER = os.getenv("BROKER")
     PORT = int(os.getenv("PORT"))
-    TOPIC = os.getenv("TOPIC")
+    TOPIC = os.getenv("TOPIC") + "/lines"
 
     args = parser.parse_args()
     if args.mqtt_check:
