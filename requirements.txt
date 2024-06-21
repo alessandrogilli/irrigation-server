@@ -6,7 +6,6 @@ h11==0.14.0
 httpcore==1.0.5
 httpx==0.27.0
 idna==3.6
-logging==0.4.9.6
 paho-mqtt==2.1.0
 pyowm==3.3.0
 PySocks==1.7.1
