@@ -4,11 +4,16 @@
 #include <ArduinoJson.h>
 #include "credentials.h"
 #include <string.h>
+#include <DHT.h>
 
 #define R1 15
 #define R2 14
 #define R3 12
 #define R4 13
+#define DHTPIN  2
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN, DHTTYPE);
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -19,6 +24,26 @@ int value = 0;
 
 String random_string = String(random(0xffff), HEX);
 String clientId = "ESP8266Client-";
+
+void temperature() {
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  StaticJsonDocument<200> doc;
+  doc["temperature"] = t;
+  doc["humidity"] = h;
+
+  char buffer[256];
+  size_t n = serializeJson(doc, buffer);
+
+  // Pubblicazione su MQTT
+  client.publish(temperature_topic, buffer, n);
+}
 
 void setup_wifi() {
 
@@ -60,7 +85,7 @@ void turn_off(int line_number){
   if(line_number == 1)
     digitalWrite(R1, LOW);
   else if (line_number == 2)
-        digitalWrite(R2, LOW);
+    digitalWrite(R2, LOW);
   else if (line_number == 3)
     digitalWrite(R3, LOW);
   else if (line_number == 4)
@@ -131,7 +156,8 @@ void reconnect() {
 
 
 void setup() {
-  pinMode(BUILTIN_LED, OUTPUT);
+  dht.begin();
+  pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, mqtt_port);
@@ -141,16 +167,6 @@ void setup() {
   pinMode(R3, OUTPUT);
   pinMode(R4, OUTPUT);
   digitalWrite(2, HIGH); 
-
-}
-
-void blink(int times){
-  for (int i=0; i<times; i++){
-      digitalWrite(2, LOW);   
-      delay(100);           
-      digitalWrite(2, HIGH);    
-      delay(100);  
-  }
 }
 
 void loop() {
@@ -163,7 +179,7 @@ void loop() {
   if (now - lastMsg > 2000) {
     lastMsg = now;
     client.publish(service_topic, clientId.c_str());
-    blink(1);
+    //temperature();
   }
  
 }
