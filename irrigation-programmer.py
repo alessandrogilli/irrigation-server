@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 
 
 def load_configuration(file_path):
@@ -54,11 +55,15 @@ def get_configuration(config):
 
 
 def main():
+    default_config_path = os.path.join(
+        os.getenv("HOME"), ".local", "irrigation-server", "irrigation_config.json"
+    )
+
     parser = argparse.ArgumentParser(description="Modify or delete irrigation program")
     parser.add_argument(
         "--file_path",
         help="Path to the configuration file",
-        default="irrigation_config.json",
+        default=default_config_path,
     )
     parser.add_argument(
         "--init", action="store_true", help="Initialize the config file"
