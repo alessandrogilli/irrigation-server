@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>irrigation-server Web Client</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">irrigation-server Web Client</h1>
+        <div class="row">
+            <div class="col-3">Line 1</div>
+            <div class="col-3">
+                <button class="btn btn-success" onclick="sendCommand(1, 'ON')">ON</button>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-danger" onclick="sendCommand(1, 'OFF')">OFF</button>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-3">Line 2</div>
+            <div class="col-3">
+                <button class="btn btn-success" onclick="sendCommand(2, 'ON')">ON</button>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-danger" onclick="sendCommand(2, 'OFF')">OFF</button>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-3">Line 3</div>
+            <div class="col-3">
+                <button class="btn btn-success" onclick="sendCommand(3, 'ON')">ON</button>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-danger" onclick="sendCommand(3, 'OFF')">OFF</button>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-3">Line 4</div>
+            <div class="col-3">
+                <button class="btn btn-success" onclick="sendCommand(4, 'ON')">ON</button>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-danger" onclick="sendCommand(4, 'OFF')">OFF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function sendCommand(line, cmd) {
+            fetch(`/irrigation-server/lines/${line}/${cmd}`, {
+                method: 'POST'
+            }).then(response => response.json())
+              .then(data => {
+                  console.log('Success:', data);
+              }).catch((error) => {
+                  console.error('Error:', error);
+              });
+        }
+    </script>
+</body>
+</html>
