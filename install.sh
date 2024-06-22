@@ -5,8 +5,6 @@ set -e
 DESTINATION="$HOME/.local/irrigation-server"
 VENV=$DESTINATION/venv
 
-mkdir -p $HOME
-
 if [ ! -d $VENV ]; then
     python3 -m venv $VENV
 fi
