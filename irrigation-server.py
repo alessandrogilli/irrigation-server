@@ -1,4 +1,5 @@
 import json
+import subprocess
 import schedule
 import time
 import logging
@@ -48,9 +49,12 @@ def mqtt_publisher(payload):
 
 
 def start_irrigate(line):
-    payload = {"line": line, "cmd": "ON"}
-    mqtt_publisher(json.dumps(payload))
-    logging.info(f"Starting line {line}.")
+    if os.path.exists("rain-check/rain.lock"):
+        logging.info("Irrigation blocked: rain.lock file exists.")
+    else:
+        payload = {"line": line, "cmd": "ON"}
+        mqtt_publisher(json.dumps(payload))
+        logging.info(f"Starting line {line}.")
 
 
 def stop_irrigate(line):
