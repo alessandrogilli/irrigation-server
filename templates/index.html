@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Irrigation Server</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+        .card h4 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table thead th {
+            background: #f8f9fa;
+            color: #667eea;
+            font-weight: 600;
+            border: none;
+            padding: 15px;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s;
+        }
+        .table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+        .input-row {
+            background: #f0f4ff;
+        }
+        .input-row input, .input-row select {
+            border: 1px solid #d0d8ff;
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+        .input-row input:focus, .input-row select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 13px;
+        }
+        h1 {
+            color: #667eea;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .lines-section ul li {
+            border: none;
+            background: #f8f9fa;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .lines-section ul li:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+
+<body>
+<div class="container py-5">
+    <div class="main-container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h1><i class="bi bi-droplet-fill me-2"></i>Irrigation Server</h1>
+            <button class="btn btn-outline-primary" onclick="load()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+        </div>
+
+        <!-- LINES -->
+        <div class="card p-4">
+            <h4><i class="bi bi-align-bottom me-2"></i>Lines</h4>
+            <div class="table-wrapper">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%">ID</th>
+                            <th style="width: 60%">Name</th>
+                            <th style="width: 10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lines-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="card p-4">
+            <h4><i class="bi bi-calendar2-check me-2"></i>Schedules</h4>
+            <div class="table-wrapper">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%">ID</th>
+                            <th style="width: 10%">Line</th>
+                            <th style="width: 25%">Description</th>
+                            <th style="width: 5%">Time On</th>
+                            <th style="width: 5%">Time Off</th>
+                            <th style="width: 5%">Status</th>
+                            <th style="width: 10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+</div>
+
+<script>
+function iconBool(value) {
+    return value
+        ? '<i class="bi bi-check-circle-fill text-success"></i>'
+        : '<i class="bi bi-x-circle-fill text-danger"></i>';
+}
+
+// ------------------- SCHEDULES -------------------
+
+async function load() {
+    const res = await fetch('/api/v1/schedules');
+    const data = await res.json();
+
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+
+    // Add data rows
+    if (data && Array.isArray(data)) {
+        data.forEach(s => {
+            const tr = document.createElement('tr');
+
+            const scheduleBtn = s.scheduled
+                ? `<button class="btn btn-warning btn-sm me-1" onclick="toggleSchedule(${s.id})" title="Pause">
+                        <i class="bi bi-pause-fill"></i>
+                   </button>`
+                : `<button class="btn btn-success btn-sm me-1" onclick="toggleSchedule(${s.id})" title="Start">
+                        <i class="bi bi-play-fill"></i>
+                   </button>`;
+
+            tr.innerHTML = `
+                <td>${s.id}</td>
+                <td><strong>${s.line_name || '-'}</strong></td>
+                <td>${s.description || '-'}</td>
+                <td><code>${s.on_time}</code></td>
+                <td><code>${s.off_time}</code></td>
+                <td>${iconBool(s.scheduled)}</td>
+                <td>
+                    ${scheduleBtn}
+                    <button class="btn btn-danger btn-sm" onclick="del(${s.id})" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    const inputRow = document.createElement('tr');
+    inputRow.className = 'input-row';
+    inputRow.innerHTML = `
+        <td></td>
+        <td>
+            <select id="new_schedule_line_id" class="form-select form-select-sm" style="width: 100%;">
+                <option value="">choose</option>
+            </select>
+        </td>
+        <td>
+            <input type="text" id="new_schedule_description" class="form-control form-control-sm" placeholder="Description" style="width: 100%;">
+        </td>
+        <td>
+            <input type="time" id="new_on_time" class="form-control form-control-sm" style="width: 100%;">
+        </td>
+        <td>
+            <input type="time" id="new_off_time" class="form-control form-control-sm" style="width: 100%;">
+        </td>
+        <td></td>
+        <td>
+            <button class="btn btn-success btn-sm" onclick="createScheduleFromRow()"><i class="bi bi-plus-circle me-1"></i>Add</button>
+        </td>
+    `;
+    tbody.appendChild(inputRow);
+
+    populateLineSelect();
+}
+
+async function populateLineSelect() {
+    const res = await fetch('/api/v1/lines');
+    const data = await res.json();
+
+    const select = document.getElementById('new_schedule_line_id');
+    if (select && data && Array.isArray(data)) {
+        data.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l.id;
+            opt.text = l.name;
+            select.appendChild(opt);
+        });
+    }
+}
+
+async function createScheduleFromRow() {
+    const line_id = parseInt(document.getElementById('new_schedule_line_id').value);
+    const on_time = document.getElementById('new_on_time').value;
+    const off_time = document.getElementById('new_off_time').value;
+    const description = document.getElementById('new_schedule_description').value;
+
+    if (!line_id || !on_time || !off_time) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    await fetch('/api/v1/schedules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ line_id: line_id, on_time: on_time, off_time: off_time, description: description })
+    });
+
+    load();
+}
+
+async function del(id) {
+    if (!confirm("Are you sure you want to delete this schedule?")) return;
+
+    await fetch(`/api/v1/schedules/${id}`, { method: 'DELETE' });
+    load();
+}
+
+async function toggleSchedule(id) {
+    const res = await fetch('/api/v1/schedules');
+    const data = await res.json();
+
+    const s = data.find(x => x.id === id);
+    if (!s) return;
+
+    const newScheduled = !s.scheduled;
+
+    await fetch(`/api/v1/schedules/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            line_id: s.line_id,
+            on_time: s.on_time,
+            off_time: s.off_time,
+            scheduled: newScheduled,
+            in_progress: s.in_progress
+        })
+    });
+
+    load();
+}
+
+// ------------------- LINES -------------------
+
+async function loadLines() {
+    const res = await fetch('/api/v1/lines');
+    const data = await res.json();
+
+    const select = document.getElementById('line_id');
+    if (select) {
+        select.innerHTML = '';
+        data.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l.id;
+            opt.text = l.name;
+            select.appendChild(opt);
+        });
+    }
+}
+
+async function loadLinesList() {
+    try {
+        const res = await fetch('/api/v1/lines');
+        const data = await res.json();
+
+        const tbody = document.getElementById('lines-table-body');
+        tbody.innerHTML = '';
+
+        if (data && Array.isArray(data)) {
+            data.forEach(l => {
+                const tr = document.createElement('tr');
+
+                const testBtn = l.is_on
+                    ? `<button class="btn btn-danger btn-sm me-1" onclick="testLine(${l.id})" title="Turn off">
+                        <i class="bi bi-stop-fill"></i>
+                       </button>`
+                    : `<button class="btn btn-primary btn-sm me-1" onclick="testLine(${l.id})" title="Turn on">
+                        <i class="bi bi-play-fill"></i>
+                       </button>`;
+
+                tr.innerHTML = `
+                    <td><strong>${l.id}</strong></td>
+                    <td><i class="bi bi-pipe me-2"></i>${l.name}</td>
+                    <td>
+                        ${testBtn}
+                        <button class="btn btn-danger btn-sm" onclick="deleteLine(${l.id})" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Add the input row
+        const inputRow = document.createElement('tr');
+        inputRow.className = 'input-row';
+        inputRow.innerHTML = `
+            <td>
+                <input type="number" id="new_line_id" class="form-control form-control-sm" placeholder="Auto" style="width: 100%;">
+            </td>
+            <td>
+                <input type="text" id="new_line_name" class="form-control form-control-sm" placeholder="Line name" style="width: 100%;">
+            </td>
+            <td>
+                <button class="btn btn-success btn-sm" onclick="createLine()"><i class="bi bi-plus-circle me-1"></i>Add</button>
+            </td>
+        `;
+        tbody.appendChild(inputRow);
+    } catch (error) {
+        console.error('Error loading lines:', error);
+    }
+}
+
+async function createLine() {
+    const id = document.getElementById('new_line_id').value;
+    const name = document.getElementById('new_line_name').value;
+
+    if (!name) return;
+
+    const body = { name };
+    if (id) {
+        body.id = parseInt(id);
+    }
+
+    await fetch('/api/v1/lines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+
+    document.getElementById('new_line_id').value = '';
+    document.getElementById('new_line_name').value = '';
+
+    loadLines();
+    loadLinesList();
+    load();
+}
+
+async function deleteLine(id) {
+    if (!confirm("Are you sure you want to delete this line?")) return;
+
+    await fetch(`/api/v1/lines/${id}`, { method: 'DELETE' });
+
+    loadLines();
+    loadLinesList();
+    load();
+}
+
+async function testLine(id) {
+    // Find current state of the line
+    const res = await fetch('/api/v1/lines');
+    const data = await res.json();
+
+    const l = data.find(x => x.id === id);
+    if (!l) return;
+
+    // Toggle
+    const newCmd = l.is_on ? "OFF" : "ON";
+
+    await fetch(`/api/v1/lines/${id}/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: newCmd })
+    });
+
+    loadLinesList();
+}
+
+// ------------------- INIT -------------------
+
+load();
+loadLinesList();
+loadLines();
+</script>
+
+</body>
+</html>
