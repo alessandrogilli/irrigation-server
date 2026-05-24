@@ -2,15 +2,20 @@ package mqtt
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 var Client mqtt.Client
 
-func Init(broker string) {
+func Init(broker string) error {
+	if broker == "" {
+		fmt.Println("No MQTT broker configured, skipping MQTT setup")
+		return nil
+	}
+
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
 	opts.SetClientID("go-scheduler")
@@ -21,10 +26,11 @@ func Init(broker string) {
 	token.Wait()
 
 	if token.Error() != nil {
-		log.Fatal(token.Error())
+		return errors.New(token.Error().Error())
 	}
 
 	fmt.Println("Connected to MQTT broker")
+	return nil
 }
 
 type Message struct {

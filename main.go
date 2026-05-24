@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,7 +31,9 @@ func main() {
 	scheduler.Init()
 	mqttBroker := os.Getenv("MQTT_BROKER")
 
-	mqtt.Init(mqttBroker)
+	if err := mqtt.Init(mqttBroker); err != nil {
+		fmt.Printf("MQTT init error: %v\n", err)
+	}
 	loadScheduledJobs()
 
 	r := chi.NewRouter()
@@ -57,7 +65,50 @@ func main() {
 		r.Post("/lines/{id}/test", handlers.TestLine)
 	})
 
-	http.ListenAndServe(":8080", r)
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
+
+	// start server
+	go func() {
+		fmt.Println("Starting HTTP server :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("HTTP server failed: %v", err)
+		}
+	}()
+
+	// wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	fmt.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("HTTP server Shutdown: %v", err)
+	}
+
+	// stop scheduler
+	if scheduler.Cron != nil {
+		scheduler.Cron.Stop()
+	}
+
+	// disconnect mqtt client if connected
+	if mqtt.Client != nil {
+		if mqtt.Client.IsConnected() {
+			mqtt.Client.Disconnect(250)
+		}
+	}
+
+	// close DB
+	if db.DB != nil {
+		db.DB.Close()
+	}
+
+	fmt.Println("Server stopped")
 }
 
 func loadScheduledJobs() {

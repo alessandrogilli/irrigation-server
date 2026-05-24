@@ -10,7 +10,7 @@ var DB *sql.DB
 
 func InitDB() error {
 	var err error
-	DB, err = sql.Open("sqlite", "file:schedules.db?_foreign_keys=on")
+	DB, err = sql.Open("sqlite", "file:data/schedules.db?_foreign_keys=on")
 	if err != nil {
 		return err
 	}
